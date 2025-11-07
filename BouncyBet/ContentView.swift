@@ -26,34 +26,53 @@ struct ContentView: View {
             
             // 3. The SwiftUI UI overlay
             VStack {
+
                 HStack {
                     // 1. Coins (left)
-                    Text("Coins: \(viewModel.playerState.coins)")
-                        .font(.subheadline)
-                        .fontWeight(.bold)
-                        .padding(12)
-                        .background(.black.opacity(0.5))
-                        .cornerRadius(10)
+                    VStack {
+                        Text("COINS")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white.opacity(0.7))
+                        Text("\(viewModel.playerState.coins)")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                    }
+                    .frame(width: 110, height: 60) // Fixed size
+                    .background(.black.opacity(0.5))
+                    .cornerRadius(10)
                     
                     Spacer()
                     
                     // 2. Score (middle)
-                    Text("Score: \(viewModel.currentRoundScore)")
-                        .font(.title2)
-                        .fontWeight(.heavy)
-                        .padding(12)
-                        .background(.black.opacity(0.5))
-                        .cornerRadius(15)
+                    VStack {
+                        Text("SCORE")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white.opacity(0.7))
+                        Text("\(viewModel.currentRoundScore)")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                    }
+                    .frame(width: 110, height: 60) // Fixed size
+                    .background(.black.opacity(0.5))
+                    .cornerRadius(10)
 
                     Spacer()
                     
                     // 3. High Score (right)
-                    Text("High Score: \(viewModel.playerState.highScore)")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .padding(12)
-                        .background(.black.opacity(0.5))
-                        .cornerRadius(10)
+                    VStack {
+                        Text("HIGH SCORE")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white.opacity(0.7))
+                        Text("\(viewModel.playerState.highScore)")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                    }
+                    .frame(width: 110, height: 60) // Fixed size
+                    .background(.black.opacity(0.5))
+                    .cornerRadius(10)
                 }
                 .padding()
                 .foregroundColor(.white)

@@ -147,50 +147,75 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         resultOverlay = SKNode()
         resultOverlay?.zPosition = 100
         
-        // Semi-transparent background
+        // 1. Full-screen semi-transparent background (same as before)
         let background = SKSpriteNode(color: UIColor.black.withAlphaComponent(0.7),
                                      size: self.size)
         background.position = CGPoint(x: self.frame.midX, y: self.frame.midY)
         resultOverlay?.addChild(background)
         
-        // Result container
-        let container = SKSpriteNode(color: UIColor.darkGray,
-                                    size: CGSize(width: 300, height: 200))
+        // 2. The new "Designed" Container
+        // We use an SKShapeNode for a rounded rectangle with a border
+        let containerSize = CGSize(width: 320, height: 250)
+        let containerRect = CGRect(x: -containerSize.width / 2,
+                                   y: -containerSize.height / 2,
+                                   width: containerSize.width,
+                                   height: containerSize.height)
+        
+        let container = SKShapeNode(rect: containerRect, cornerRadius: 20)
+        container.fillColor = UIColor.black.withAlphaComponent(0.5) // Semi-transparent black
+        container.strokeColor = .white.withAlphaComponent(0.8)       // White border
+        container.lineWidth = 2
         container.position = CGPoint(x: self.frame.midX, y: self.frame.midY)
         resultOverlay?.addChild(container)
+
+        // 3. Title Label
+        let titleLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
+        titleLabel.text = "ROUND COMPLETE!"
+        titleLabel.fontSize = 28
+        titleLabel.fontColor = .white
+        titleLabel.position = CGPoint(x: 0, y: 80) // Relative to container center
+        container.addChild(titleLabel)
+
+        // 4. Score Label
+        let scoreTitleLabel = SKLabelNode(fontNamed: "Helvetica")
+        scoreTitleLabel.text = "SCORE"
+        scoreTitleLabel.fontSize = 16
+        scoreTitleLabel.fontColor = .lightGray
+        scoreTitleLabel.position = CGPoint(x: 0, y: 30)
+        container.addChild(scoreTitleLabel)
         
-        // Score label
-        let scoreLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
-        scoreLabel.text = "ROUND COMPLETE!"
-        scoreLabel.fontSize = 24
-        scoreLabel.fontColor = .white
-        scoreLabel.position = CGPoint(x: self.frame.midX, y: self.frame.midY + 50)
-        resultOverlay?.addChild(scoreLabel)
-        
-        // Points label
-        let pointsLabel = SKLabelNode(fontNamed: "Helvetica")
-        pointsLabel.text = "Score: \(score) points"
-        pointsLabel.fontSize = 20
-        pointsLabel.fontColor = .yellow
-        pointsLabel.position = CGPoint(x: self.frame.midX, y: self.frame.midY)
-        resultOverlay?.addChild(pointsLabel)
-        
-        // Payout label
-        let payoutLabel = SKLabelNode(fontNamed: "Helvetica")
+        let scoreValueLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
+        scoreValueLabel.text = "\(score)"
+        scoreValueLabel.fontSize = 40
+        scoreValueLabel.fontColor = .yellow
+        scoreValueLabel.position = CGPoint(x: 0, y: -10)
+        container.addChild(scoreValueLabel)
+
+        // 5. Payout Label
         let netGain = payout - GameConfig.wagerAmount
         let gainText = netGain >= 0 ? "+\(netGain)" : "\(netGain)"
-        payoutLabel.text = "Coins: \(gainText)"
-        payoutLabel.fontSize = 20
-        payoutLabel.fontColor = netGain >= 0 ? .green : .red
-        payoutLabel.position = CGPoint(x: self.frame.midX, y: self.frame.midY - 50)
-        resultOverlay?.addChild(payoutLabel)
-        
-        // Info text
+        let netColor = netGain >= 0 ? UIColor.green : UIColor.red
+
+        let payoutTitleLabel = SKLabelNode(fontNamed: "Helvetica")
+        payoutTitleLabel.text = "COINS"
+        payoutTitleLabel.fontSize = 16
+        payoutTitleLabel.fontColor = .lightGray
+        payoutTitleLabel.position = CGPoint(x: 0, y: -60)
+        container.addChild(payoutTitleLabel)
+
+        let payoutValueLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
+        payoutValueLabel.text = "\(gainText)"
+        payoutValueLabel.fontSize = 32
+        payoutValueLabel.fontColor = netColor
+        payoutValueLabel.position = CGPoint(x: 0, y: -90)
+        container.addChild(payoutValueLabel)
+
+        // 6. Info text
         let infoLabel = SKLabelNode(fontNamed: "Helvetica")
         infoLabel.text = "Tap 'Enter Round' to continue"
         infoLabel.fontSize = 14
         infoLabel.fontColor = .lightGray
-        infoLabel.position = CGPoint(x: self.frame.midX, y: self.frame.midY - 100)
+        infoLabel.position = CGPoint(x: self.frame.midX, y: self.frame.midY - containerSize.height / 2 - 30)
         resultOverlay?.addChild(infoLabel)
         
         addChild(resultOverlay!)
@@ -413,7 +438,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private func generateField(objectCount: Int) {
         // MOVED HIGHER UP - field is now in the upper portion of screen
         let playableRect = CGRect(x: 30,
-                                y: self.frame.midY - 160,  // Start from middle
+                                y: self.frame.midY - 170,  // Start from middle
                                 width: self.frame.width - 60,
                                   height: (self.frame.height / 2 - 50) + 70)  // Use upper half
         
