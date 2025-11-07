@@ -229,7 +229,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         // 3. Create the launcher (at bottom)
         launcherNode = SKSpriteNode(color: .cyan, size: CGSize(width: 60, height: 60))
-        launcherNode.position = CGPoint(x: self.frame.midX, y: self.frame.minY + 100)
+        launcherNode.position = CGPoint(x: self.frame.midX, y: self.frame.minY + 130)
         launcherNode.zPosition = 10
         
         // Add a circular outline to the launcher
@@ -303,19 +303,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             yOffset -= 30
         }
         
-        // Start button
-        let buttonBg = SKSpriteNode(color: .green, size: CGSize(width: 200, height: 50))
-        buttonBg.position = CGPoint(x: self.frame.midX, y: self.frame.midY - 150)
-        buttonBg.name = "startButton"
-        tutorialOverlay?.addChild(buttonBg)
-        
-        let buttonText = SKLabelNode(fontNamed: "Helvetica-Bold")
-        buttonText.text = "START PLAYING"
-        buttonText.fontSize = 20
-        buttonText.fontColor = .white
-        buttonText.verticalAlignmentMode = .center
-        buttonText.position = CGPoint.zero
-        buttonBg.addChild(buttonText)
+
         
         addChild(tutorialOverlay!)
     }
@@ -326,50 +314,75 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         resultOverlay = SKNode()
         resultOverlay?.zPosition = 100
         
-        // Semi-transparent background
+        // 1. Full-screen semi-transparent background (same as before)
         let background = SKSpriteNode(color: UIColor.black.withAlphaComponent(0.7),
                                      size: self.size)
         background.position = CGPoint(x: self.frame.midX, y: self.frame.midY)
         resultOverlay?.addChild(background)
         
-        // Result container
-        let container = SKSpriteNode(color: UIColor.darkGray,
-                                    size: CGSize(width: 300, height: 200))
+        // 2. The new "Designed" Container
+        // We use an SKShapeNode for a rounded rectangle with a border
+        let containerSize = CGSize(width: 320, height: 250)
+        let containerRect = CGRect(x: -containerSize.width / 2,
+                                   y: -containerSize.height / 2,
+                                   width: containerSize.width,
+                                   height: containerSize.height)
+        
+        let container = SKShapeNode(rect: containerRect, cornerRadius: 20)
+        container.fillColor = UIColor.black.withAlphaComponent(0.5) // Semi-transparent black
+        container.strokeColor = .white.withAlphaComponent(0.8)       // White border
+        container.lineWidth = 2
         container.position = CGPoint(x: self.frame.midX, y: self.frame.midY)
         resultOverlay?.addChild(container)
+
+        // 3. Title Label
+        let titleLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
+        titleLabel.text = "ROUND COMPLETE!"
+        titleLabel.fontSize = 28
+        titleLabel.fontColor = .white
+        titleLabel.position = CGPoint(x: 0, y: 80) // Relative to container center
+        container.addChild(titleLabel)
+
+        // 4. Score Label
+        let scoreTitleLabel = SKLabelNode(fontNamed: "Helvetica")
+        scoreTitleLabel.text = "SCORE"
+        scoreTitleLabel.fontSize = 16
+        scoreTitleLabel.fontColor = .lightGray
+        scoreTitleLabel.position = CGPoint(x: 0, y: 30)
+        container.addChild(scoreTitleLabel)
         
-        // Score label
-        let scoreLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
-        scoreLabel.text = "ROUND COMPLETE!"
-        scoreLabel.fontSize = 24
-        scoreLabel.fontColor = .white
-        scoreLabel.position = CGPoint(x: self.frame.midX, y: self.frame.midY + 50)
-        resultOverlay?.addChild(scoreLabel)
-        
-        // Points label
-        let pointsLabel = SKLabelNode(fontNamed: "Helvetica")
-        pointsLabel.text = "Score: \(score) points"
-        pointsLabel.fontSize = 20
-        pointsLabel.fontColor = .yellow
-        pointsLabel.position = CGPoint(x: self.frame.midX, y: self.frame.midY)
-        resultOverlay?.addChild(pointsLabel)
-        
-        // Payout label
-        let payoutLabel = SKLabelNode(fontNamed: "Helvetica")
+        let scoreValueLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
+        scoreValueLabel.text = "\(score)"
+        scoreValueLabel.fontSize = 40
+        scoreValueLabel.fontColor = .yellow
+        scoreValueLabel.position = CGPoint(x: 0, y: -10)
+        container.addChild(scoreValueLabel)
+
+        // 5. Payout Label
         let netGain = payout - GameConfig.wagerAmount
         let gainText = netGain >= 0 ? "+\(netGain)" : "\(netGain)"
-        payoutLabel.text = "Coins: \(gainText)"
-        payoutLabel.fontSize = 20
-        payoutLabel.fontColor = netGain >= 0 ? .green : .red
-        payoutLabel.position = CGPoint(x: self.frame.midX, y: self.frame.midY - 50)
-        resultOverlay?.addChild(payoutLabel)
-        
-        // Info text
+        let netColor = netGain >= 0 ? UIColor.green : UIColor.red
+
+        let payoutTitleLabel = SKLabelNode(fontNamed: "Helvetica")
+        payoutTitleLabel.text = "COINS"
+        payoutTitleLabel.fontSize = 16
+        payoutTitleLabel.fontColor = .lightGray
+        payoutTitleLabel.position = CGPoint(x: 0, y: -60)
+        container.addChild(payoutTitleLabel)
+
+        let payoutValueLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
+        payoutValueLabel.text = "\(gainText)"
+        payoutValueLabel.fontSize = 32
+        payoutValueLabel.fontColor = netColor
+        payoutValueLabel.position = CGPoint(x: 0, y: -90)
+        container.addChild(payoutValueLabel)
+
+        // 6. Info text
         let infoLabel = SKLabelNode(fontNamed: "Helvetica")
         infoLabel.text = "Tap 'Enter Round' to continue"
         infoLabel.fontSize = 14
         infoLabel.fontColor = .lightGray
-        infoLabel.position = CGPoint(x: self.frame.midX, y: self.frame.midY - 100)
+        infoLabel.position = CGPoint(x: self.frame.midX, y: self.frame.midY - containerSize.height / 2 - 30)
         resultOverlay?.addChild(infoLabel)
         
         addChild(resultOverlay!)
@@ -445,14 +458,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let location = touch.location(in: self)
         let nodes = self.nodes(at: location)
         
-        // Check for tutorial start button
-        if nodes.contains(where: { $0.name == "startButton" }) {
-            tutorialOverlay?.removeFromParent()
-            tutorialOverlay = nil
-            isShowingOverlay = false
-            return
-        }
-        
         // Don't allow interaction during overlays or active rounds
         guard !isShowingOverlay, !isRoundActive else { return }
         
@@ -504,7 +509,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                                  dy: start.y - current.y)
         
         // Limit maximum power
-        let maxPower: CGFloat = 15.0
+        let maxPower: CGFloat = 7.5
         let power = min(sqrt(pullVector.dx * pullVector.dx + pullVector.dy * pullVector.dy) / 10, maxPower)
         
         // Only shoot if pulled back enough
@@ -536,7 +541,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         // Update power label
         let power = min(sqrt(pullVector.dx * pullVector.dx + pullVector.dy * pullVector.dy) / 10, 15)
-        powerLabel?.text = String(format: "Power: %.0f%%", power * 100 / 15)
+        powerLabel?.text = String(format: "Power: %.0f%%", power * 100 / 10)
     }
     
     private func shootProjectile(direction: CGVector, power: CGFloat) {
@@ -600,9 +605,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private func generateField(objectCount: Int) {
         // MOVED HIGHER UP - field is now in the upper portion of screen
         let playableRect = CGRect(x: 30,
-                                y: self.frame.midY,  // Start from middle
+                                y: self.frame.midY - 170,  // Start from middle
                                 width: self.frame.width - 60,
-                                height: self.frame.height / 2 - 50)  // Use upper half
+                                  height: (self.frame.height / 2 - 50) + 70)  // Use upper half
         
         // Generate balanced objects (equal good/bad)
         var objectsToPlace: [ObjectData] = []
@@ -713,6 +718,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     // MARK: - Collision Handling
+    func hideTutorialOverlay() {
+        tutorialOverlay?.removeFromParent()
+        tutorialOverlay = nil
+        isShowingOverlay = false
+    }
     
     func didBegin(_ contact: SKPhysicsContact) {
         let bodyA: SKPhysicsBody
@@ -802,6 +812,9 @@ class GameViewModel: ObservableObject {
     
     /// Called by the SwiftUI "Enter Round" button.
     func placeWager() {
+        
+        gameScene.hideTutorialOverlay()
+        
         guard playerState.coins >= GameConfig.wagerAmount, !isRoundActive else {
             return // Not enough coins, or round already in progress
         }
@@ -885,39 +898,63 @@ struct ContentView: View {
             
             // 3. The SwiftUI UI overlay
             VStack {
+
                 HStack {
-                    Text("Coins: \(viewModel.playerState.coins)")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .padding(12)
-                        .background(.black.opacity(0.5))
-                        .cornerRadius(10)
+                    // 1. Coins (left)
+                    VStack {
+                        Text("COINS")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white.opacity(0.7))
+                        Text("\(viewModel.playerState.coins)")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                    }
+                    .frame(width: 110, height: 60) // Fixed size
+                    .background(.black.opacity(0.5))
+                    .cornerRadius(10)
                     
                     Spacer()
                     
-                    Text("High Score: \(viewModel.playerState.highScore)")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .padding(12)
-                        .background(.black.opacity(0.5))
-                        .cornerRadius(10)
+                    // 2. Score (middle)
+                    VStack {
+                        Text("SCORE")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white.opacity(0.7))
+                        Text("\(viewModel.currentRoundScore)")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                    }
+                    .frame(width: 110, height: 60) // Fixed size
+                    .background(.black.opacity(0.5))
+                    .cornerRadius(10)
+
+                    Spacer()
+                    
+                    // 3. High Score (right)
+                    VStack {
+                        Text("HIGH SCORE")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white.opacity(0.7))
+                        Text("\(viewModel.playerState.highScore)")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                    }
+                    .frame(width: 110, height: 60) // Fixed size
+                    .background(.black.opacity(0.5))
+                    .cornerRadius(10)
                 }
                 .padding()
                 .foregroundColor(.white)
-                
                 Spacer()
+                                
+                // 4. The bottom UI section
                 
-                // 4. The bottom UI section changes based on game state.
-                if viewModel.isRoundActive {
-                    // Show the current score during the round
-                    Text("Score: \(viewModel.currentRoundScore)")
-                        .font(.largeTitle)
-                        .fontWeight(.heavy)
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(.black.opacity(0.5))
-                        .cornerRadius(15)
-                } else {
+                // ADD THIS LINE
+                if !viewModel.isRoundActive {
+                    
                     // Show the "Enter Round" button when idle
                     Button(action: viewModel.placeWager) {
                         Text("Enter Round (\(GameConfig.wagerAmount) Coins)")
@@ -931,7 +968,10 @@ struct ContentView: View {
                     }
                     .disabled(!viewModel.canAffordWager) // Disable if not enough coins
                     .padding()
+                    
+                // ADD THIS LINE
                 }
+
             }
         }
     }

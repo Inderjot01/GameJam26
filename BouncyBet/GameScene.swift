@@ -506,7 +506,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         switch data.type {
         case .obstacle:
-            size = CGSize(width: 25, height: 25)
+            size = CGSize(width: 50, height: 50)
             color = UIColor(red: 0.3, green: 0.6, blue: 1.0, alpha: 1.0)
             category = PhysicsCategory.obstacle
         case .reward:
@@ -514,12 +514,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             color = UIColor(red: 1.0, green: 0.8, blue: 0.2, alpha: 1.0)
             category = PhysicsCategory.reward
         case .hazard:
-            size = CGSize(width: 30, height: 30)  // Same size as reward
+            size = CGSize(width: 40, height: 40)  // Same size as reward
             color = UIColor(red: 1.0, green: 0.3, blue: 0.3, alpha: 1.0)
             category = PhysicsCategory.hazard
         }
         
-        let node = SKSpriteNode(color: color, size: size)
+        let node = SKSpriteNode(imageNamed: data.textureName)
+        node.size = size
         node.name = data.id.uuidString
         
         // Add visual effects based on type
