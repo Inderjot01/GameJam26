@@ -27,8 +27,9 @@ struct ContentView: View {
             // 3. The SwiftUI UI overlay
             VStack {
                 HStack {
+                    // 1. Coins (left)
                     Text("Coins: \(viewModel.playerState.coins)")
-                        .font(.title2)
+                        .font(.subheadline)
                         .fontWeight(.bold)
                         .padding(12)
                         .background(.black.opacity(0.5))
@@ -36,6 +37,17 @@ struct ContentView: View {
                     
                     Spacer()
                     
+                    // 2. Score (middle)
+                    Text("Score: \(viewModel.currentRoundScore)")
+                        .font(.title2)
+                        .fontWeight(.heavy)
+                        .padding(12)
+                        .background(.black.opacity(0.5))
+                        .cornerRadius(15)
+
+                    Spacer()
+                    
+                    // 3. High Score (right)
                     Text("High Score: \(viewModel.playerState.highScore)")
                         .font(.subheadline)
                         .fontWeight(.medium)
@@ -45,20 +57,13 @@ struct ContentView: View {
                 }
                 .padding()
                 .foregroundColor(.white)
-                
                 Spacer()
+                                
+                // 4. The bottom UI section
                 
-                // 4. The bottom UI section changes based on game state.
-                if viewModel.isRoundActive {
-                    // Show the current score during the round
-                    Text("Score: \(viewModel.currentRoundScore)")
-                        .font(.largeTitle)
-                        .fontWeight(.heavy)
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(.black.opacity(0.5))
-                        .cornerRadius(15)
-                } else {
+                // ADD THIS LINE
+                if !viewModel.isRoundActive {
+                    
                     // Show the "Enter Round" button when idle
                     Button(action: viewModel.placeWager) {
                         Text("Enter Round (\(GameConfig.wagerAmount) Coins)")
@@ -72,7 +77,10 @@ struct ContentView: View {
                     }
                     .disabled(!viewModel.canAffordWager) // Disable if not enough coins
                     .padding()
+                    
+                // ADD THIS LINE
                 }
+
             }
         }
     }

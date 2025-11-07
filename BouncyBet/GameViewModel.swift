@@ -44,10 +44,18 @@ class GameViewModel: ObservableObject {
         self.gameScene.viewModel = self
     }
     
+    func startNewRound() {
+        gameScene.hideResultOverlay()
+        placeWager()
+    }
+    
     // MARK: - Intents (Methods called by UI)
     
     /// Called by the SwiftUI "Enter Round" button.
     func placeWager() {
+        
+        gameScene.hideTutorialOverlay()
+        
         guard playerState.coins >= GameConfig.wagerAmount, !isRoundActive else {
             return // Not enough coins, or round already in progress
         }

@@ -33,10 +33,10 @@ struct GameConfig {
     static let wagerAmount: Int = 10
     static let payoutMultiplier: Int = 1 // Payout = Score * Multiplier
     
-    // Scoring
-    static let obstaclePoints: Int = 10
-    static let rewardPoints: Int = 100
-    static let hazardPoints: Int = -50
+    // Scoring - Balanced for fair gameplay
+    static let obstaclePoints: Int = 5      // Reduced from 10
+    static let rewardPoints: Int = 50       // Reduced from 100
+    static let hazardPoints: Int = -50      // Same penalty
 }
 
 // MARK: - Field Object Definitions

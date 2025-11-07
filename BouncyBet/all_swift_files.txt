@@ -1,4 +1,171 @@
 //
+//  DataModels.swift
+//  BouncyBet
+//
+//  Defines all pure data structures for the game.
+//
+
+import Foundation
+import CoreGraphics // For CGVector
+
+// MARK: - Player State
+
+/// Holds all persistent data for the player.
+/// Codable allows it to be saved to UserDefaults easily.
+struct PlayerState: Codable {
+    var coins: Int
+    var highScore: Int
+
+    /// Provides a default state for new players.
+    static var `default`: PlayerState {
+        PlayerState(coins: 100, highScore: 0)
+    }
+}
+
+// MARK: - Game Configuration
+
+/// Contains static constants for game balancing and physics.
+/// Centralizing these here makes the game easy to tune.
+struct GameConfig {
+    static let projectileLifespan: TimeInterval = 10.0
+    
+    // Wager and Payout
+    static let wagerAmount: Int = 10
+    static let payoutMultiplier: Int = 1 // Payout = Score * Multiplier
+    
+    // Scoring - Balanced for fair gameplay
+    static let obstaclePoints: Int = 5      // Reduced from 10
+    static let rewardPoints: Int = 50       // Reduced from 100
+    static let hazardPoints: Int = -50      // Same penalty
+}
+
+// MARK: - Field Object Definitions
+
+/// Defines the type of object on the field.
+enum ObjectType: CaseIterable {
+    case obstacle // Standard peg
+    case reward   // Positive points
+    case hazard   // Negative points
+}
+
+/// A pure data model representing a single object in the field.
+struct ObjectData {
+    let id: UUID = UUID()
+    let type: ObjectType
+    let points: Int
+    let textureName: String
+    
+    /// Factory method to create a random object with balanced distribution
+    static func createRandom() -> ObjectData {
+        let random = Int.random(in: 0..<100)
+        
+        if random < 50 {
+            // 50% chance for obstacles
+            return ObjectData(type: .obstacle, points: GameConfig.obstaclePoints, textureName: "obstacle")
+        } else if random < 80 {
+            // 30% chance for rewards
+            return ObjectData(type: .reward, points: GameConfig.rewardPoints, textureName: "reward")
+        } else {
+            // 20% chance for hazards
+            return ObjectData(type: .hazard, points: GameConfig.hazardPoints, textureName: "hazard")
+        }
+    }
+}
+
+// MARK: - Physics Categories
+
+/// Defines all physics categories using UInt32 bitmasks.
+/// This struct is the brain of the collision detection system.
+struct PhysicsCategory {
+    static let none:            UInt32 = 0
+    static let projectile:      UInt32 = 0x1 << 0 // (1)
+    static let obstacle:        UInt32 = 0x1 << 1 // (2)
+    static let reward:          UInt32 = 0x1 << 2 // (4)
+    static let hazard:          UInt32 = 0x1 << 3 // (8)
+    static let worldBoundary:   UInt32 = 0x1 << 4 // (16)
+}
+//
+//
+//  BouncyBetGameApp.swift
+//  BouncyBet
+//
+//  This is the main entry point for the SwiftUI application.
+//
+
+import SwiftUI
+
+@main
+struct BouncyBetGameApp: App {
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+        }
+    }
+}
+//
+//  PersistenceManager.swift
+//  BouncyBet
+//
+//  Manages saving and loading game data (PlayerState).
+//  Uses a Singleton pattern and a @UserDefault property wrapper.
+//
+
+import Foundation
+
+/// A singleton class to manage all data persistence.
+class PersistenceManager {
+    static let shared = PersistenceManager()
+    
+    // This property wrapper handles all the logic for
+    // encoding/decoding the PlayerState struct to/from UserDefaults.
+    @UserDefault(key: "playerState", defaultValue: PlayerState.default)
+    var playerState: PlayerState
+
+    private init() {}
+    
+    func save(_ state: PlayerState) {
+        self.playerState = state
+    }
+
+    func load() -> PlayerState {
+        return self.playerState
+    }
+}
+
+// MARK: - @UserDefault Property Wrapper
+
+/// A generic property wrapper for saving/loading Codable types in UserDefaults.
+@propertyWrapper
+struct UserDefault<T: Codable> {
+    let key: String
+    let defaultValue: T
+    let storage: UserDefaults
+
+    init(key: String, defaultValue: T, storage: UserDefaults = .standard) {
+        self.key = key
+        self.defaultValue = defaultValue
+        self.storage = storage
+    }
+
+    var wrappedValue: T {
+        get {
+            // Read and decode the data
+            guard let data = storage.data(forKey: key) else {
+                return defaultValue
+            }
+            let decoder = JSONDecoder()
+            return (try? decoder.decode(T.self, from: data)) ?? defaultValue
+        }
+        set {
+            // Encode and save the data
+            let encoder = JSONEncoder()
+            if let encodedData = try? encoder.encode(newValue) {
+                storage.set(encodedData, forKey: key)
+            }
+        }
+    }
+}
+//
 //  GameScene.swift
 //  BouncyBet
 //
@@ -62,7 +229,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         // 3. Create the launcher (at bottom)
         launcherNode = SKSpriteNode(color: .cyan, size: CGSize(width: 60, height: 60))
-        launcherNode.position = CGPoint(x: self.frame.midX, y: self.frame.minY + 130)
+        launcherNode.position = CGPoint(x: self.frame.midX, y: self.frame.minY + 100)
         launcherNode.zPosition = 10
         
         // Add a circular outline to the launcher
@@ -136,7 +303,19 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             yOffset -= 30
         }
         
-
+        // Start button
+        let buttonBg = SKSpriteNode(color: .green, size: CGSize(width: 200, height: 50))
+        buttonBg.position = CGPoint(x: self.frame.midX, y: self.frame.midY - 150)
+        buttonBg.name = "startButton"
+        tutorialOverlay?.addChild(buttonBg)
+        
+        let buttonText = SKLabelNode(fontNamed: "Helvetica-Bold")
+        buttonText.text = "START PLAYING"
+        buttonText.fontSize = 20
+        buttonText.fontColor = .white
+        buttonText.verticalAlignmentMode = .center
+        buttonText.position = CGPoint.zero
+        buttonBg.addChild(buttonText)
         
         addChild(tutorialOverlay!)
     }
@@ -265,6 +444,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         let location = touch.location(in: self)
         let nodes = self.nodes(at: location)
+        
+        // Check for tutorial start button
+        if nodes.contains(where: { $0.name == "startButton" }) {
+            tutorialOverlay?.removeFromParent()
+            tutorialOverlay = nil
+            isShowingOverlay = false
+            return
+        }
         
         // Don't allow interaction during overlays or active rounds
         guard !isShowingOverlay, !isRoundActive else { return }
@@ -413,9 +600,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private func generateField(objectCount: Int) {
         // MOVED HIGHER UP - field is now in the upper portion of screen
         let playableRect = CGRect(x: 30,
-                                y: self.frame.midY - 160,  // Start from middle
+                                y: self.frame.midY,  // Start from middle
                                 width: self.frame.width - 60,
-                                  height: (self.frame.height / 2 - 50) + 70)  // Use upper half
+                                height: self.frame.height / 2 - 50)  // Use upper half
         
         // Generate balanced objects (equal good/bad)
         var objectsToPlace: [ObjectData] = []
@@ -526,11 +713,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     // MARK: - Collision Handling
-    func hideTutorialOverlay() {
-        tutorialOverlay?.removeFromParent()
-        tutorialOverlay = nil
-        isShowingOverlay = false
-    }
     
     func didBegin(_ contact: SKPhysicsContact) {
         let bodyA: SKPhysicsBody
@@ -562,6 +744,195 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         if bodyB.categoryBitMask == PhysicsCategory.reward || bodyB.categoryBitMask == PhysicsCategory.hazard {
             otherNode?.removeFromParent()
+        }
+    }
+}
+//
+//  GameViewModel.swift
+//  BouncyBet
+//
+//  This class is the "single source of truth" for the application.
+//  It's an ObservableObject, so SwiftUI views can subscribe to its changes.
+//  It bridges the gap between the SwiftUI UI and the SpriteKit GameScene.
+//
+
+import Foundation
+import SpriteKit
+import Combine  // ADD THIS IMPORT
+
+class GameViewModel: ObservableObject {
+    
+    // MARK: - Published Properties
+    // SwiftUI views will automatically update when these change.
+    
+    @Published var playerState: PlayerState
+    @Published var isRoundActive: Bool = false
+    @Published var currentRoundScore: Int = 0
+    
+    // MARK: - Properties
+    
+    /// A reference to the SpriteKit scene.
+    let gameScene: GameScene
+
+    // MARK: - Initializer
+    
+    init() {
+        // 1. Load the player's saved state
+        let loadedState = PersistenceManager.shared.load()
+        self.playerState = loadedState
+        
+        // 2. Create the GameScene
+        // We set the size here (e.g., iPhone 14 Pro)
+        // .aspectFill will scale it to other devices.
+        self.gameScene = GameScene(size: CGSize(width: 393, height: 852))
+        self.gameScene.scaleMode = .aspectFill
+        
+        // 3. CRITICAL: Pass a reference of this ViewModel TO the GameScene.
+        // This is the "delegate" pattern that allows the scene to call
+        // methods on the ViewModel (e.g., roundDidEnd).
+        self.gameScene.viewModel = self
+    }
+    
+    func startNewRound() {
+        gameScene.hideResultOverlay()
+        placeWager()
+    }
+    
+    // MARK: - Intents (Methods called by UI)
+    
+    /// Called by the SwiftUI "Enter Round" button.
+    func placeWager() {
+        guard playerState.coins >= GameConfig.wagerAmount, !isRoundActive else {
+            return // Not enough coins, or round already in progress
+        }
+        
+        // 1. Deduct the wager
+        playerState.coins -= GameConfig.wagerAmount
+        
+        // 2. Update state
+        isRoundActive = true
+        currentRoundScore = 0
+        
+        // 3. Tell the GameScene to set up the new field
+        gameScene.prepareNewRound()
+    }
+    
+    // MARK: - Callbacks (Methods called by GameScene)
+    
+    /// Called by the GameScene when the 10-second timer expires.
+    func roundDidEnd(score: Int) {
+        // 1. Calculate payout
+        let payout = score * GameConfig.payoutMultiplier
+        
+        // 2. Add payout to total
+        playerState.coins += payout
+        
+        // 3. Check for high score
+        if score > playerState.highScore {
+            playerState.highScore = score
+        }
+        
+        // 4. Update state
+        isRoundActive = false
+        currentRoundScore = score
+        
+        // 5. Save the new player state to disk
+        PersistenceManager.shared.save(playerState)
+    }
+    
+    /// Called by the GameScene on every collision to update the UI in real-time.
+    func scoreDidChange(newScore: Int) {
+        // Use `DispatchQueue.main.async` because this is called
+        // from the SpriteKit physics loop (a background thread).
+        // UI updates MUST happen on the main thread.
+        DispatchQueue.main.async {
+            self.currentRoundScore = newScore
+        }
+    }
+}
+
+// A helper extension for the view
+extension GameViewModel {
+    var canAffordWager: Bool {
+        playerState.coins >= GameConfig.wagerAmount
+    }
+}
+//
+//  ContentView.swift
+//  BouncyBet
+//
+//  This is the main SwiftUI view. It hosts the SpriteView
+//  and overlays the UI on top of it.
+//
+
+import SwiftUI
+import SpriteKit
+import Combine  // ADD THIS IMPORT (optional but good practice)
+
+struct ContentView: View {
+    
+    // 1. Creates the ViewModel, the app's "source of truth".
+    //    @StateObject ensures it lives for the life of the view.
+    @StateObject private var viewModel = GameViewModel()
+
+    var body: some View {
+        ZStack {
+            
+            // 2. The SpriteKit game scene, hosted in SwiftUI.
+            //    It fills the entire background.
+            SpriteView(scene: viewModel.gameScene)
+                .ignoresSafeArea()
+            
+            // 3. The SwiftUI UI overlay
+            VStack {
+                HStack {
+                    Text("Coins: \(viewModel.playerState.coins)")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .padding(12)
+                        .background(.black.opacity(0.5))
+                        .cornerRadius(10)
+                    
+                    Spacer()
+                    
+                    Text("High Score: \(viewModel.playerState.highScore)")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .padding(12)
+                        .background(.black.opacity(0.5))
+                        .cornerRadius(10)
+                }
+                .padding()
+                .foregroundColor(.white)
+                
+                Spacer()
+                
+                // 4. The bottom UI section changes based on game state.
+                if viewModel.isRoundActive {
+                    // Show the current score during the round
+                    Text("Score: \(viewModel.currentRoundScore)")
+                        .font(.largeTitle)
+                        .fontWeight(.heavy)
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(.black.opacity(0.5))
+                        .cornerRadius(15)
+                } else {
+                    // Show the "Enter Round" button when idle
+                    Button(action: viewModel.placeWager) {
+                        Text("Enter Round (\(GameConfig.wagerAmount) Coins)")
+                            .font(.headline)
+                            .fontWeight(.bold)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(viewModel.canAffordWager ? Color.blue : Color.gray)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                    }
+                    .disabled(!viewModel.canAffordWager) // Disable if not enough coins
+                    .padding()
+                }
+            }
         }
     }
 }
