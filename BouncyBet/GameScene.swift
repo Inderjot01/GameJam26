@@ -342,7 +342,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                                  dy: start.y - current.y)
         
         // Limit maximum power
-        let maxPower: CGFloat = 15.0
+        let maxPower: CGFloat = 7.5
         let power = min(sqrt(pullVector.dx * pullVector.dx + pullVector.dy * pullVector.dy) / 10, maxPower)
         
         // Only shoot if pulled back enough
@@ -374,7 +374,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         // Update power label
         let power = min(sqrt(pullVector.dx * pullVector.dx + pullVector.dy * pullVector.dy) / 10, 15)
-        powerLabel?.text = String(format: "Power: %.0f%%", power * 100 / 15)
+        powerLabel?.text = String(format: "Power: %.0f%%", power * 100 / 10)
     }
     
     private func shootProjectile(direction: CGVector, power: CGFloat) {
