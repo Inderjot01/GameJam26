@@ -35,6 +35,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private var currentTouch: CGPoint?
     private var isDragging = false
     
+    //sounds
+    private let launchSound = SKAction.playSoundFileNamed("launch.wav", waitForCompletion: false)
+    private let coinSound = SKAction.playSoundFileNamed("coin.wav", waitForCompletion: false)
+    private let hazardSound = SKAction.playSoundFileNamed("hazard.wav", waitForCompletion: false)
+    private let obstacleSound = SKAction.playSoundFileNamed("obstacle.mp3", waitForCompletion: false)
+    
     // Trail effect
     private var trailNode: SKEmitterNode?
     
@@ -101,7 +107,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         // Semi-transparent background
         let background = SKSpriteNode(color: UIColor.black.withAlphaComponent(0.8),
-                                     size: self.size)
+                                      size: self.size)
         background.position = CGPoint(x: self.frame.midX, y: self.frame.midY)
         tutorialOverlay?.addChild(background)
         
@@ -136,7 +142,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             yOffset -= 30
         }
         
-
+        
         
         addChild(tutorialOverlay!)
     }
@@ -149,7 +155,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         // 1. Full-screen semi-transparent background (same as before)
         let background = SKSpriteNode(color: UIColor.black.withAlphaComponent(0.7),
-                                     size: self.size)
+                                      size: self.size)
         background.position = CGPoint(x: self.frame.midX, y: self.frame.midY)
         resultOverlay?.addChild(background)
         
@@ -167,7 +173,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         container.lineWidth = 2
         container.position = CGPoint(x: self.frame.midX, y: self.frame.midY)
         resultOverlay?.addChild(container)
-
+        
         // 3. Title Label
         let titleLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
         titleLabel.text = "ROUND COMPLETE!"
@@ -175,7 +181,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         titleLabel.fontColor = .white
         titleLabel.position = CGPoint(x: 0, y: 80) // Relative to container center
         container.addChild(titleLabel)
-
+        
         // 4. Score Label
         let scoreTitleLabel = SKLabelNode(fontNamed: "Helvetica")
         scoreTitleLabel.text = "SCORE"
@@ -190,26 +196,26 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         scoreValueLabel.fontColor = .yellow
         scoreValueLabel.position = CGPoint(x: 0, y: -10)
         container.addChild(scoreValueLabel)
-
+        
         // 5. Payout Label
         let netGain = payout - GameConfig.wagerAmount
         let gainText = netGain >= 0 ? "+\(netGain)" : "\(netGain)"
         let netColor = netGain >= 0 ? UIColor.green : UIColor.red
-
+        
         let payoutTitleLabel = SKLabelNode(fontNamed: "Helvetica")
         payoutTitleLabel.text = "COINS"
         payoutTitleLabel.fontSize = 16
         payoutTitleLabel.fontColor = .lightGray
         payoutTitleLabel.position = CGPoint(x: 0, y: -60)
         container.addChild(payoutTitleLabel)
-
+        
         let payoutValueLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
         payoutValueLabel.text = "\(gainText)"
         payoutValueLabel.fontSize = 32
         payoutValueLabel.fontColor = netColor
         payoutValueLabel.position = CGPoint(x: 0, y: -90)
         container.addChild(payoutValueLabel)
-
+        
         // 6. Info text
         let infoLabel = SKLabelNode(fontNamed: "Helvetica")
         infoLabel.text = "Tap 'Enter Round' to continue"
@@ -296,7 +302,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         // Check if touch is near the launcher
         let distance = hypot(location.x - launcherNode.position.x,
-                           location.y - launcherNode.position.y)
+                             location.y - launcherNode.position.y)
         
         if distance < 100 {
             isDragging = true
@@ -339,7 +345,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         // Calculate pull vector (opposite direction)
         let pullVector = CGVector(dx: start.x - current.x,
-                                 dy: start.y - current.y)
+                                  dy: start.y - current.y)
         
         // Limit maximum power
         let maxPower: CGFloat = 7.5
@@ -348,6 +354,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         // Only shoot if pulled back enough
         if power > 1 {
             shootProjectile(direction: pullVector, power: power)
+            
         }
         
         startTouch = nil
@@ -362,11 +369,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         // Calculate trajectory preview
         let pullVector = CGVector(dx: start.x - current.x,
-                             dy: start.y - current.y)
+                                  dy: start.y - current.y)
         
         // Show preview line in shooting direction
         let previewEnd = CGPoint(x: start.x + pullVector.dx * 2,
-                            y: start.y + pullVector.dy * 2)
+                                 y: start.y + pullVector.dy * 2)
         
         path.move(to: start)
         path.addLine(to: previewEnd)
@@ -382,6 +389,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         projectileNode = SKSpriteNode(color: .white, size: CGSize(width: 12, height: 12))
         projectileNode?.position = launcherNode.position
         projectileNode?.zPosition = 8
+        
+        run(launchSound)
         
         // 2. Create trail effect
         let trail = SKEmitterNode()
@@ -426,7 +435,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         // 4. Apply velocity based on drag
         let velocity = CGVector(dx: direction.dx * power,
-                               dy: direction.dy * power)
+                                dy: direction.dy * power)
         body.velocity = velocity
         
         // 5. Start timer
@@ -438,8 +447,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private func generateField(objectCount: Int) {
         // MOVED HIGHER UP - field is now in the upper portion of screen
         let playableRect = CGRect(x: 30,
-                                y: self.frame.midY - 170,  // Start from middle
-                                width: self.frame.width - 60,
+                                  y: self.frame.midY - 170,  // Start from middle
+                                  width: self.frame.width - 60,
                                   height: (self.frame.height / 2 - 50) + 70)  // Use upper half
         
         // Generate balanced objects (equal good/bad)
@@ -452,20 +461,20 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         for _ in 0..<obstacleCount {
             objectsToPlace.append(ObjectData(type: .obstacle,
-                                           points: GameConfig.obstaclePoints,
-                                           textureName: "obstacle"))
+                                             points: GameConfig.obstaclePoints,
+                                             textureName: "obstacle"))
         }
         
         for _ in 0..<rewardCount {
             objectsToPlace.append(ObjectData(type: .reward,
-                                           points: GameConfig.rewardPoints,
-                                           textureName: "reward"))
+                                             points: GameConfig.rewardPoints,
+                                             textureName: "reward"))
         }
         
         for _ in 0..<hazardCount {
             objectsToPlace.append(ObjectData(type: .hazard,
-                                           points: GameConfig.hazardPoints,
-                                           textureName: "hazard"))
+                                             points: GameConfig.hazardPoints,
+                                             textureName: "hazard"))
         }
         
         // Shuffle for random placement
@@ -569,28 +578,28 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             bodyB = contact.bodyA
         }
         
-             func showScorePopup(text: String, color: SKColor, position: CGPoint) {
-                let label = SKLabelNode(fontNamed: "Helvetica-Bold")
-                label.text = text
-                label.fontSize = 50
-                label.fontColor = color
-                label.position = position
-                label.zPosition = 101 // Make sure it's above other nodes
-                
-                // Create the animation
-                let moveUp = SKAction.moveBy(x: 0, y: 50, duration: 0.75) // Move up 50 points
-                let fadeOut = SKAction.fadeOut(withDuration: 0.75)       // Fade out at the same time
-                
-                // Group the animations to run together
-                let animation = SKAction.group([moveUp, fadeOut])
-                
-                // Create a sequence to run the animation, then remove the label
-                let sequence = SKAction.sequence([animation, .removeFromParent()])
-                
-                label.run(sequence)
-                addChild(label)
-            }
-
+        func showScorePopup(text: String, color: SKColor, position: CGPoint) {
+            let label = SKLabelNode(fontNamed: "Helvetica-Bold")
+            label.text = text
+            label.fontSize = 50
+            label.fontColor = color
+            label.position = position
+            label.zPosition = 101 // Make sure it's above other nodes
+            
+            // Create the animation
+            let moveUp = SKAction.moveBy(x: 0, y: 50, duration: 0.75) // Move up 50 points
+            let fadeOut = SKAction.fadeOut(withDuration: 0.75)       // Fade out at the same time
+            
+            // Group the animations to run together
+            let animation = SKAction.group([moveUp, fadeOut])
+            
+            // Create a sequence to run the animation, then remove the label
+            let sequence = SKAction.sequence([animation, .removeFromParent()])
+            
+            label.run(sequence)
+            addChild(label)
+        }
+        
         guard bodyA.categoryBitMask == PhysicsCategory.projectile else { return }
         
         let otherNode = bodyB.node
@@ -598,25 +607,30 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         if let points = otherNode?.userData?["points"] as? Int {
             currentRoundScore += points
             if bodyB.categoryBitMask == PhysicsCategory.reward {
-                            // Show "+50" in green (or yellow)
-                            showScorePopup(text: "+\(points)", color: .green, position: contact.contactPoint)
-                        } else if bodyB.categoryBitMask == PhysicsCategory.hazard {
-                            // Show "-50" in red
-                            showScorePopup(text: "\(points)", color: .red, position: contact.contactPoint)
-                        }
-            
-            // Visual feedback for scoring
-            if let node = otherNode {
-                let flash = SKAction.sequence([
-                    SKAction.fadeAlpha(to: 0.3, duration: 0.1),
-                    SKAction.fadeAlpha(to: 1.0, duration: 0.1)
-                ])
-                node.run(flash)
+                // Show "+50" in green (or yellow)
+                showScorePopup(text: "+\(points)", color: .green, position: contact.contactPoint)
+                run(coinSound)
+            } else if bodyB.categoryBitMask == PhysicsCategory.hazard {
+                // Show "-50" in red
+                showScorePopup(text: "\(points)", color: .red, position: contact.contactPoint)
+                run(hazardSound)
+            } else if bodyB.categoryBitMask == PhysicsCategory.obstacle {
+                //print("!!! OBSTACLE HIT - PLAYING SOUND !!!")
+                run(obstacleSound)
+                
+                // Visual feedback for scoring
+                if let node = otherNode {
+                    let flash = SKAction.sequence([
+                        SKAction.fadeAlpha(to: 0.3, duration: 0.1),
+                        SKAction.fadeAlpha(to: 1.0, duration: 0.1)
+                    ])
+                    node.run(flash)
+                }
             }
-        }
-        
-        if bodyB.categoryBitMask == PhysicsCategory.reward || bodyB.categoryBitMask == PhysicsCategory.hazard {
-            otherNode?.removeFromParent()
+            
+            if bodyB.categoryBitMask == PhysicsCategory.reward || bodyB.categoryBitMask == PhysicsCategory.hazard {
+                otherNode?.removeFromParent()
+            }
         }
     }
 }
