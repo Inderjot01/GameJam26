@@ -568,6 +568,28 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             bodyA = contact.bodyB
             bodyB = contact.bodyA
         }
+        
+             func showScorePopup(text: String, color: SKColor, position: CGPoint) {
+                let label = SKLabelNode(fontNamed: "Helvetica-Bold")
+                label.text = text
+                label.fontSize = 50
+                label.fontColor = color
+                label.position = position
+                label.zPosition = 101 // Make sure it's above other nodes
+                
+                // Create the animation
+                let moveUp = SKAction.moveBy(x: 0, y: 50, duration: 0.75) // Move up 50 points
+                let fadeOut = SKAction.fadeOut(withDuration: 0.75)       // Fade out at the same time
+                
+                // Group the animations to run together
+                let animation = SKAction.group([moveUp, fadeOut])
+                
+                // Create a sequence to run the animation, then remove the label
+                let sequence = SKAction.sequence([animation, .removeFromParent()])
+                
+                label.run(sequence)
+                addChild(label)
+            }
 
         guard bodyA.categoryBitMask == PhysicsCategory.projectile else { return }
         
@@ -575,6 +597,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         if let points = otherNode?.userData?["points"] as? Int {
             currentRoundScore += points
+            if bodyB.categoryBitMask == PhysicsCategory.reward {
+                            // Show "+50" in green (or yellow)
+                            showScorePopup(text: "+\(points)", color: .green, position: contact.contactPoint)
+                        } else if bodyB.categoryBitMask == PhysicsCategory.hazard {
+                            // Show "-50" in red
+                            showScorePopup(text: "\(points)", color: .red, position: contact.contactPoint)
+                        }
             
             // Visual feedback for scoring
             if let node = otherNode {
